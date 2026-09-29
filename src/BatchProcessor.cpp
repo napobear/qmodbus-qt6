@@ -126,15 +126,15 @@ void BatchProcessor::runBatch()
 
 	QTextStream out( &m_outputFile );
 
-	foreach( const QString &slaveCfg, slaves )
+	for( const QString &slaveCfg : slaves )
 	{
 		if( slaveCfg.contains( ':' ) )
 		{
 			const int slaveID = slaveCfg.split( ':' ).first().toInt();
 			const QStringList addresses = slaveCfg.split( ':' ).last().split( ',' );
-			foreach( const QString &addr, addresses )
+			for( const QString &addr : addresses )
 			{
-				out << QDateTime::currentDateTime().toTime_t() << slaveID << ", " << addr.toInt() << ", " << sendModbusRequest( slaveID, func, addr.toInt() ) << Qt::endl;
+				out << QDateTime::currentDateTime().toSecsSinceEpoch() << slaveID << ", " << addr.toInt() << ", " << sendModbusRequest( slaveID, func, addr.toInt() ) << Qt::endl;
 			}
 		}
 	}

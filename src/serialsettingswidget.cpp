@@ -1,5 +1,5 @@
 #include <QSettings>
-#include "qextserialenumerator.h"
+#include <QSerialPortInfo>
 #include "serialsettingswidget.h"
 #include "ui_serialsettingswidget.h"
 
@@ -25,14 +25,15 @@ int SerialSettingsWidget::setupModbusPort()
 	int i = 0;
     ui->serialPort->disconnect();
     ui->serialPort->clear();
-	foreach( QextPortInfo port, QextSerialEnumerator::getPorts() )
+	const auto ports = QSerialPortInfo::availablePorts();
+	for( const QSerialPortInfo &port : ports )
 	{
 #ifdef Q_OS_WIN
-        ui->serialPort->addItem( port.friendName );
+        ui->serialPort->addItem( port.portName() );
 #else
-        ui->serialPort->addItem( port.physName );
+        ui->serialPort->addItem( port.systemLocation() );
 #endif
-		if( port.friendName == s.value( "serialinterface" ) )
+		if( port.portName() == s.value( "serialinterface" ) )
 		{
 			portIndex = i;
 		}
@@ -80,17 +81,17 @@ void SerialSettingsWidget::changeSerialPort( int )
 {
 	const int iface = ui->serialPort->currentIndex();
 
-	QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+	const QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
 	if( !ports.isEmpty() )
 	{
 		QSettings settings;
-		settings.setValue( "serialinterface", ports[iface].friendName );
+		settings.setValue( "serialinterface", ports[iface].portName() );
 		settings.setValue( "serialbaudrate", ui->baud->currentText() );
 		settings.setValue( "serialparity", ui->parity->currentText() );
 		settings.setValue( "serialdatabits", ui->dataBits->currentText() );
 		settings.setValue( "serialstopbits", ui->stopBits->currentText() );
-#ifdef Q_OS_WIN32
-		QString port = ports[iface].portName;
+#ifdef Q_OS_WIN
+		QString port = ports[iface].portName();
 
 		// is it a serial port in the range COM1 .. COM9?
 		if ( port.startsWith( "COM" ) )
@@ -99,7 +100,7 @@ void SerialSettingsWidget::changeSerialPort( int )
 			port = "\\\\.\\" + port;
 		}
 #else
-		const QString port = ports[iface].physName;
+		const QString port = ports[iface].systemLocation();
 #endif
 
 		char parity;
