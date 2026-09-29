@@ -35,6 +35,21 @@ traffic on the bus.
 
 
 
+Credits
+-------
+
+QModBus was originally created by Tobias Junghans / EDC Electronic Design
+Chemnitz GmbH (http://www.ed-chemnitz.de), with the Modbus TCP support
+designed and implemented by Karl-Heinz Reichel, ing-büro reichel-langer
+(http://www.techdrivers.de). See AUTHORS for the full list of contributors.
+
+Upstream project: http://qmodbus.sourceforge.net and
+https://github.com/ed-chemnitz/qmodbus
+
+This repository is a Qt6 port of that project.
+
+
+
 Requirements
 ------------
 
@@ -47,6 +62,33 @@ Building
 --------
 
 See INSTALL for information on how to build QModBus.
+
+
+
+Usage
+-----
+
+QModBus can be launched already connected, instead of always requiring
+manual setup in the GUI:
+
+  qmodbus --mode rtu|ascii --serial-port <device> [--baud <rate>]
+          [--data-bits 7|8] [--stop-bits 1|1.5|2] [--parity none|odd|even]
+
+  qmodbus --mode tcp --host <ipv4-address> [--tcp-port <port>]
+
+For Modbus TCP, a single request can also be sent automatically right
+after connecting:
+
+  qmodbus --mode tcp --host <ipv4-address> [--tcp-port <port>] \
+          --slave-id <1-254> --start-address <0-65535> --num-coils <1-65535> \
+          --function-code read-coils|read-discrete-inputs|
+                          read-holding-registers|read-input-registers
+
+--slave-id, --function-code, --start-address and --num-coils must all be
+given together. Only the read function codes are supported here, since
+there is no option to supply the value(s) a write would need.
+
+Run `qmodbus --help` for the full list of options.
 
 
 

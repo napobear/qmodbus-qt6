@@ -46,7 +46,7 @@ const int DataColumn = 2;
 extern MainWindow * globalMainWin;
 
 
-MainWindow::MainWindow( const CliModbusOptions & cliOptions, QWidget * _parent ) :
+MainWindow::MainWindow( QWidget * _parent ) :
 	QMainWindow( _parent ),
 	ui( new Ui::MainWindowClass ),
 	m_modbus( NULL ),
@@ -113,8 +113,6 @@ MainWindow::MainWindow( const CliModbusOptions & cliOptions, QWidget * _parent )
 	m_statusTimer = new QTimer( this );
 	connect( m_statusTimer, SIGNAL(timeout()), this, SLOT(resetStatus()));
 	m_statusTimer->setSingleShot(true);
-
-	applyCliOptions( cliOptions );
 }
 
 
@@ -680,6 +678,14 @@ void MainWindow::applyCliOptions( const CliModbusOptions & cliOptions )
 		case ModbusCliMode::Tcp:
 			ui->tabWidget->setCurrentWidget( ui->tab_2 );
 			ui->tcpSettingsWidget->configureAndActivate( cliOptions.host, cliOptions.tcpPort );
+			if( cliOptions.sendRequest )
+			{
+				ui->slaveID->setValue( cliOptions.slaveId );
+				ui->functionCode->setCurrentIndex( cliOptions.functionCode - MODBUS_FC_READ_COILS );
+				ui->startAddr->setValue( cliOptions.startAddress );
+				ui->numCoils->setValue( cliOptions.numCoils );
+				sendModbusRequest();
+			}
 			break;
 
 		case ModbusCliMode::None:

@@ -59,8 +59,16 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow( const CliModbusOptions & cliOptions = CliModbusOptions(), QWidget * parent = 0 );
+    MainWindow( QWidget * parent = 0 );
     ~MainWindow();
+
+    // Applies connection parameters gathered from the command line: switches
+    // to the requested tab, fills in the settings widget and connects, and
+    // optionally sends one request. Callers must set globalMainWin (see
+    // main.cpp) before calling this, since a successful connect/send here
+    // synchronously drives the modbus_register_monitor_*_fnc callbacks,
+    // which dereference it.
+    void applyCliOptions( const CliModbusOptions & cliOptions );
 
     void busMonitorAddItem( bool isRequest,
                 uint8_t slave,
@@ -97,7 +105,6 @@ private slots:
 private:
     void keyPressEvent(QKeyEvent* event);
     void keyReleaseEvent(QKeyEvent* event);
-    void applyCliOptions( const CliModbusOptions & cliOptions );
 
     Ui::MainWindowClass * ui;
     modbus_t * m_modbus;

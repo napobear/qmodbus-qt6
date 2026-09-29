@@ -51,6 +51,15 @@ struct CliModbusOptions
 	// TCP
 	QString host;
 	int     tcpPort  = 502;
+
+	// TCP request, sent once right after connecting if sendRequest is set
+	// (requires --slave-id, --function-code, --start-address and
+	// --num-coils to all be given together on the command line).
+	bool    sendRequest   = false;
+	int     slaveId       = 1;
+	int     functionCode  = 0;
+	int     startAddress  = 0;
+	int     numCoils      = 1;
 };
 
 #endif // CLIMODBUSOPTIONS_H
