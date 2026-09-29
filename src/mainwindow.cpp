@@ -30,8 +30,11 @@
 
 #include "mainwindow.h"
 #include "BatchProcessor.h"
+#include "asciisettingswidget.h"
 #include "modbus.h"
 #include "modbus-private.h"
+#include "rtusettingswidget.h"
+#include "tcpipsettingswidget.h"
 
 #include "ui_mainwindow.h"
 
@@ -651,4 +654,42 @@ void MainWindow::setStatusError(const QString &msg)
     m_statusInd->setStyleSheet( "background: red;" );
 
     m_statusTimer->start( 2000 );
+}
+
+
+void MainWindow::applyCliOptions( const CliModbusOptions & cliOptions )
+{
+	switch( cliOptions.mode )
+	{
+		case ModbusCliMode::Rtu:
+			ui->tabWidget->setCurrentWidget( ui->tab );
+			ui->rtuSettingsWidget->configureAndActivate( cliOptions.serialPort,
+					cliOptions.baud, cliOptions.dataBits,
+					cliOptions.stopBits, cliOptions.parity );
+			break;
+
+		case ModbusCliMode::Ascii:
+			ui->tabWidget->setCurrentWidget( ui->tab_3 );
+			ui->asciiSettingsWidget->configureAndActivate( cliOptions.serialPort,
+					cliOptions.baud, cliOptions.dataBits,
+					cliOptions.stopBits, cliOptions.parity );
+			break;
+
+		case ModbusCliMode::Tcp:
+			ui->tabWidget->setCurrentWidget( ui->tab_2 );
+			ui->tcpSettingsWidget->configureAndActivate( cliOptions.host, cliOptions.tcpPort );
+			if( cliOptions.sendRequest )
+			{
+				ui->slaveID->setValue( cliOptions.slaveId );
+				ui->functionCode->setCurrentIndex( cliOptions.functionCode - MODBUS_FC_READ_COILS );
+				ui->startAddr->setValue( cliOptions.startAddress );
+				ui->numCoils->setValue( cliOptions.numCoils );
+				sendModbusRequest();
+			}
+			break;
+
+		case ModbusCliMode::None:
+		default:
+			break;
+	}
 }

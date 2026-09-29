@@ -22,6 +22,13 @@ public:
 
 	virtual int setupModbusPort();
 
+	// Selects the given port/baud/data bits/stop bits/parity (adding the
+	// port to the list if it isn't among the currently enumerated ports)
+	// and connects, as if the user had picked them and ticked "Active".
+	// Used to apply connection parameters given on the command line.
+	void configureAndActivate( const QString & portName, int baud, int dataBits,
+					const QString & stopBits, const QString & parity );
+
 protected:
 	virtual void changeModbusInterface(const QString &port, char parity) = 0;
 	void releaseSerialModbus();
