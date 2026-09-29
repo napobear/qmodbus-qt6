@@ -144,30 +144,32 @@ static CliModbusOptions parseCliOptions( QCommandLineParser & parser, const QApp
 	QCommandLineOption slaveIdOption(
 		QStringLiteral( "slave-id" ),
 		QStringLiteral( "Slave ID for a request sent once after connecting in --mode tcp (1-254). "
-			"Requires --function-code, --start-address and --num-coils too." ),
-		QStringLiteral( "id" ) );
+			"Independent of --function-code/--start-address/--num-coils: giving any one of the "
+			"four sends a request, the rest default as they do in the GUI." ),
+		QStringLiteral( "id" ), QStringLiteral( "1" ) );
 	parser.addOption( slaveIdOption );
 
 	QCommandLineOption functionCodeOption(
 		QStringLiteral( "function-code" ),
 		QStringLiteral( "Function code for a request sent once after connecting in --mode tcp: "
 			"read-coils, read-discrete-inputs, read-holding-registers or read-input-registers "
-			"(numeric 1-4 / 0x01-0x04 also accepted). Write function codes aren't supported "
-			"here, since there is no option to supply the value(s) to write." ),
-		QStringLiteral( "code" ) );
+			"(numeric 1-4 / 0x01-0x04 also accepted; default read-coils). Write function codes "
+			"aren't supported here, since there is no option to supply the value(s) to write." ),
+		QStringLiteral( "code" ), QStringLiteral( "read-coils" ) );
 	parser.addOption( functionCodeOption );
 
 	QCommandLineOption startAddressOption(
 		QStringLiteral( "start-address" ),
-		QStringLiteral( "Start address for a request sent once after connecting in --mode tcp (0-65535)." ),
-		QStringLiteral( "addr" ) );
+		QStringLiteral( "Start address for a request sent once after connecting in --mode tcp "
+			"(0-65535, default 0)." ),
+		QStringLiteral( "addr" ), QStringLiteral( "0" ) );
 	parser.addOption( startAddressOption );
 
 	QCommandLineOption numCoilsOption(
 		QStringLiteral( "num-coils" ),
 		QStringLiteral( "Number of coils/registers to read for a request sent once after "
-			"connecting in --mode tcp (1-65535)." ),
-		QStringLiteral( "count" ) );
+			"connecting in --mode tcp (1-65535, default 1)." ),
+		QStringLiteral( "count" ), QStringLiteral( "1" ) );
 	parser.addOption( numCoilsOption );
 
 	parser.process( app );
@@ -249,39 +251,32 @@ static CliModbusOptions parseCliOptions( QCommandLineParser & parser, const QApp
 		if( !portOk || opts.tcpPort <= 0 || opts.tcpPort > 65535 )
 			cliError( QStringLiteral( "invalid --tcp-port '%1'." ).arg( parser.value( tcpPortOption ) ) );
 
-		const bool anyRequestOptionSet = parser.isSet( slaveIdOption ) || parser.isSet( functionCodeOption )
+		// --slave-id, --function-code, --start-address and --num-coils are
+		// independent of each other: each is parsed and validated on its
+		// own (falling back to its own default, matching the GUI's, if
+		// not given), and a request is sent if any one of them was set.
+		bool slaveOk = false;
+		opts.slaveId = parser.value( slaveIdOption ).toInt( &slaveOk );
+		if( !slaveOk || opts.slaveId < 1 || opts.slaveId > 254 )
+			cliError( QStringLiteral( "invalid --slave-id '%1', expected 1-254." ).arg( parser.value( slaveIdOption ) ) );
+
+		if( !parseFunctionCode( parser.value( functionCodeOption ), opts.functionCode ) )
+			cliError( QStringLiteral( "invalid --function-code '%1'; expected read-coils, "
+				"read-discrete-inputs, read-holding-registers or read-input-registers "
+				"(write function codes aren't supported here)." ).arg( parser.value( functionCodeOption ) ) );
+
+		bool addrOk = false;
+		opts.startAddress = parser.value( startAddressOption ).toInt( &addrOk );
+		if( !addrOk || opts.startAddress < 0 || opts.startAddress > 65535 )
+			cliError( QStringLiteral( "invalid --start-address '%1', expected 0-65535." ).arg( parser.value( startAddressOption ) ) );
+
+		bool numOk = false;
+		opts.numCoils = parser.value( numCoilsOption ).toInt( &numOk );
+		if( !numOk || opts.numCoils < 1 || opts.numCoils > 65535 )
+			cliError( QStringLiteral( "invalid --num-coils '%1', expected 1-65535." ).arg( parser.value( numCoilsOption ) ) );
+
+		opts.sendRequest = parser.isSet( slaveIdOption ) || parser.isSet( functionCodeOption )
 				|| parser.isSet( startAddressOption ) || parser.isSet( numCoilsOption );
-		if( anyRequestOptionSet )
-		{
-			for( const QCommandLineOption & opt : requestOptions )
-			{
-				if( !parser.isSet( opt ) )
-					cliError( QStringLiteral( "--slave-id, --function-code, --start-address and "
-						"--num-coils must all be given together." ) );
-			}
-
-			bool slaveOk = false;
-			opts.slaveId = parser.value( slaveIdOption ).toInt( &slaveOk );
-			if( !slaveOk || opts.slaveId < 1 || opts.slaveId > 254 )
-				cliError( QStringLiteral( "invalid --slave-id '%1', expected 1-254." ).arg( parser.value( slaveIdOption ) ) );
-
-			if( !parseFunctionCode( parser.value( functionCodeOption ), opts.functionCode ) )
-				cliError( QStringLiteral( "invalid --function-code '%1'; expected read-coils, "
-					"read-discrete-inputs, read-holding-registers or read-input-registers "
-					"(write function codes aren't supported here)." ).arg( parser.value( functionCodeOption ) ) );
-
-			bool addrOk = false;
-			opts.startAddress = parser.value( startAddressOption ).toInt( &addrOk );
-			if( !addrOk || opts.startAddress < 0 || opts.startAddress > 65535 )
-				cliError( QStringLiteral( "invalid --start-address '%1', expected 0-65535." ).arg( parser.value( startAddressOption ) ) );
-
-			bool numOk = false;
-			opts.numCoils = parser.value( numCoilsOption ).toInt( &numOk );
-			if( !numOk || opts.numCoils < 1 || opts.numCoils > 65535 )
-				cliError( QStringLiteral( "invalid --num-coils '%1', expected 1-65535." ).arg( parser.value( numCoilsOption ) ) );
-
-			opts.sendRequest = true;
-		}
 	}
 
 	return opts;

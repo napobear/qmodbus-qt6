@@ -77,16 +77,19 @@ manual setup in the GUI:
   qmodbus --mode tcp --host <ipv4-address> [--tcp-port <port>]
 
 For Modbus TCP, a single request can also be sent automatically right
-after connecting:
+after connecting, by giving any one (or more) of:
 
   qmodbus --mode tcp --host <ipv4-address> [--tcp-port <port>] \
-          --slave-id <1-254> --start-address <0-65535> --num-coils <1-65535> \
-          --function-code read-coils|read-discrete-inputs|
-                          read-holding-registers|read-input-registers
+          [--slave-id <1-254>] [--start-address <0-65535>] [--num-coils <1-65535>] \
+          [--function-code read-coils|read-discrete-inputs|
+                           read-holding-registers|read-input-registers]
 
---slave-id, --function-code, --start-address and --num-coils must all be
-given together. Only the read function codes are supported here, since
-there is no option to supply the value(s) a write would need.
+--slave-id, --function-code, --start-address and --num-coils are
+independent of each other: any one of them triggers the request, and
+whichever of the rest you don't set falls back to the same default the
+GUI itself starts with (slave ID 1, read-coils, address 0, count 1).
+Only the read function codes are supported here, since there is no
+option to supply the value(s) a write would need.
 
 Run `qmodbus --help` for the full list of options.
 
