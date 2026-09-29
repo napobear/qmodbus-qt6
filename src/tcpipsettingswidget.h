@@ -20,6 +20,11 @@ public:
     virtual int setupModbusPort();
     void tcpConnect();
 
+    // Fills in address/port (when non-empty/non-zero) and connects, as if
+    // the user had entered them and ticked "Active". Used to apply
+    // connection parameters given on the command line.
+    void configureAndActivate( const QString & address, int port );
+
 protected:
     void changeModbusInterface(const QString& address, int portNbr);
     void releaseTcpModbus();

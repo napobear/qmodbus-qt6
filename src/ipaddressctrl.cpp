@@ -16,13 +16,13 @@ IPAddressCtrl::~IPAddressCtrl()
 
 void IPAddressCtrl::settext(const QString &t)
 {
-    QStringList sl = t.split(QChar('.'));
+    const QStringList sl = t.split(QChar('.'));
     for (int i=0; i < sl.size(); i++) {
         switch(i) {
         case 0: ui->ipEd0->setText(sl[0]); break;
-        case 1: ui->ipEd0->setText(sl[1]); break;
-        case 2: ui->ipEd0->setText(sl[2]); break;
-        case 3: ui->ipEd0->setText(sl[3]); break;
+        case 1: ui->ipEd1->setText(sl[1]); break;
+        case 2: ui->ipEd2->setText(sl[2]); break;
+        case 3: ui->ipEd3->setText(sl[3]); break;
         default: break;
         }
     }

@@ -23,6 +23,7 @@ SOURCES += src/main.cpp \
 
 HEADERS += src/mainwindow.h \
     src/BatchProcessor.h \
+    src/climodbusoptions.h \
     3rdparty/libmodbus/src/modbus.h \
     src/serialsettingswidget.h \
     src/imodbus.h \

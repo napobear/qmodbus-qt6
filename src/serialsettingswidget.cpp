@@ -1,7 +1,16 @@
+#include <QComboBox>
 #include <QSettings>
 #include <QSerialPortInfo>
+#include <QSignalBlocker>
 #include "serialsettingswidget.h"
 #include "ui_serialsettingswidget.h"
+
+
+#ifdef Q_OS_WIN
+static inline QString portDisplayName( const QSerialPortInfo & port ) { return port.portName(); }
+#else
+static inline QString portDisplayName( const QSerialPortInfo & port ) { return port.systemLocation(); }
+#endif
 
 SerialSettingsWidget::SerialSettingsWidget(QWidget *parent) :
 	QWidget(parent),
@@ -28,12 +37,9 @@ int SerialSettingsWidget::setupModbusPort()
 	const auto ports = QSerialPortInfo::availablePorts();
 	for( const QSerialPortInfo &port : ports )
 	{
-#ifdef Q_OS_WIN
-        ui->serialPort->addItem( port.portName() );
-#else
-        ui->serialPort->addItem( port.systemLocation() );
-#endif
-		if( port.portName() == s.value( "serialinterface" ) )
+		const QString display = portDisplayName( port );
+		ui->serialPort->addItem( display );
+		if( display == s.value( "serialinterface" ) )
 		{
 			portIndex = i;
 		}
@@ -79,47 +85,94 @@ static inline QString embracedString( const QString & s )
 
 void SerialSettingsWidget::changeSerialPort( int )
 {
-	const int iface = ui->serialPort->currentIndex();
-
-	const QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
-	if( !ports.isEmpty() )
-	{
-		QSettings settings;
-		settings.setValue( "serialinterface", ports[iface].portName() );
-		settings.setValue( "serialbaudrate", ui->baud->currentText() );
-		settings.setValue( "serialparity", ui->parity->currentText() );
-		settings.setValue( "serialdatabits", ui->dataBits->currentText() );
-		settings.setValue( "serialstopbits", ui->stopBits->currentText() );
-#ifdef Q_OS_WIN
-		QString port = ports[iface].portName();
-
-		// is it a serial port in the range COM1 .. COM9?
-		if ( port.startsWith( "COM" ) )
-		{
-			// use windows communication device name "\\.\COMn"
-			port = "\\\\.\\" + port;
-		}
-#else
-		const QString port = ports[iface].systemLocation();
-#endif
-
-		char parity;
-		switch( ui->parity->currentIndex() )
-		{
-			case 1: parity = 'O'; break;
-			case 2: parity = 'E'; break;
-			default:
-			case 0: parity = 'N'; break;
-		}
-
-		changeModbusInterface(port, parity);
-
-		emit serialPortActive(true);
-	}
-	else
+	if( ui->serialPort->count() == 0 )
 	{
 		emit connectionError( tr( "No serial port found" ) );
+		return;
 	}
+
+	// Use the combo box's own text rather than re-querying and
+	// index-matching QSerialPortInfo::availablePorts(): that list can
+	// change between population and selection, and it wouldn't contain
+	// a port added explicitly (e.g. via the command line) that isn't
+	// currently enumerated by the OS.
+	const QString port = ui->serialPort->currentText();
+
+	QSettings settings;
+	settings.setValue( "serialinterface", port );
+	settings.setValue( "serialbaudrate", ui->baud->currentText() );
+	settings.setValue( "serialparity", ui->parity->currentText() );
+	settings.setValue( "serialdatabits", ui->dataBits->currentText() );
+	settings.setValue( "serialstopbits", ui->stopBits->currentText() );
+
+	QString devicePath = port;
+#ifdef Q_OS_WIN
+	// is it a serial port in the range COM1 .. COM9?
+	if ( devicePath.startsWith( "COM" ) )
+	{
+		// use windows communication device name "\\.\COMn"
+		devicePath = "\\\\.\\" + devicePath;
+	}
+#endif
+
+	char parity;
+	switch( ui->parity->currentIndex() )
+	{
+		case 1: parity = 'O'; break;
+		case 2: parity = 'E'; break;
+		default:
+		case 0: parity = 'N'; break;
+	}
+
+	changeModbusInterface(devicePath, parity);
+
+	emit serialPortActive(true);
+}
+
+
+void SerialSettingsWidget::configureAndActivate( const QString & portName, int baud, int dataBits,
+				const QString & stopBits, const QString & parity )
+{
+	// setupModbusPort() wires each combo box's currentIndexChanged signal
+	// to changeSerialPort(), which immediately (re)connects using whatever
+	// is currently selected. Block that while we populate every field, so
+	// we don't fire off a string of partially-configured connect attempts
+	// (e.g. with baud still blank) before all the requested values are in
+	// place; the explicit changeSerialPort(0) call below performs the one
+	// connection attempt that actually matters.
+	const QSignalBlocker blockPort( ui->serialPort );
+	const QSignalBlocker blockBaud( ui->baud );
+	const QSignalBlocker blockDataBits( ui->dataBits );
+	const QSignalBlocker blockStopBits( ui->stopBits );
+	const QSignalBlocker blockParity( ui->parity );
+
+	setupModbusPort();
+
+	auto selectOrAdd = []( QComboBox * box, const QString & text )
+	{
+		int idx = box->findText( text );
+		if( idx < 0 )
+		{
+			box->addItem( text );
+			idx = box->count() - 1;
+		}
+		box->setCurrentIndex( idx );
+	};
+
+	if( !portName.isEmpty() )
+		selectOrAdd( ui->serialPort, portName );
+	if( baud > 0 )
+		selectOrAdd( ui->baud, QString::number( baud ) );
+	if( dataBits > 0 )
+		selectOrAdd( ui->dataBits, QString::number( dataBits ) );
+	if( !stopBits.isEmpty() )
+		selectOrAdd( ui->stopBits, stopBits );
+	if( !parity.isEmpty() )
+		selectOrAdd( ui->parity, parity );
+
+	ui->checkBox->setChecked( true );
+	enableGuiItems( true );
+	changeSerialPort( 0 );
 }
 
 

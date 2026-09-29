@@ -65,3 +65,15 @@ void TcpIpSettingsWidget::tcpConnect()
     changeModbusInterface(ui->edNetworkAddress->text(), portNbr);
     emit tcpPortActive(ui->cbEnabled->isChecked());
 }
+
+void TcpIpSettingsWidget::configureAndActivate(const QString &address, int port)
+{
+    if( !address.isEmpty() )
+        ui->edNetworkAddress->settext( address );
+    if( port > 0 )
+        ui->edPort->setText( QString::number( port ) );
+
+    ui->cbEnabled->setChecked( true );
+    enableGuiItems( true );
+    tcpConnect();
+}

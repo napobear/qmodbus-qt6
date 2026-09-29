@@ -28,6 +28,7 @@
 #include <QMainWindow>
 #include <QTimer>
 
+#include "climodbusoptions.h"
 #include "modbus.h"
 #include "ui_about.h"
 
@@ -58,7 +59,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow( QWidget * parent = 0 );
+    MainWindow( const CliModbusOptions & cliOptions = CliModbusOptions(), QWidget * parent = 0 );
     ~MainWindow();
 
     void busMonitorAddItem( bool isRequest,
@@ -96,6 +97,7 @@ private slots:
 private:
     void keyPressEvent(QKeyEvent* event);
     void keyReleaseEvent(QKeyEvent* event);
+    void applyCliOptions( const CliModbusOptions & cliOptions );
 
     Ui::MainWindowClass * ui;
     modbus_t * m_modbus;
