@@ -38,7 +38,7 @@ traffic on the bus.
 Requirements
 ------------
 
-* Qt5
+* Qt6 (Core, Gui, Widgets, SerialPort)
 * GCC
 
 

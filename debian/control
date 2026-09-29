@@ -2,7 +2,7 @@ Source: qmodbus
 Section: electronics
 Priority: optional
 Maintainer: Jean-Samuel Reynaud <js.reynaud@gmail.com>
-Build-Depends: debhelper (>= 4.0.0), qtbase5-dev-tools
+Build-Depends: debhelper (>= 4.0.0), qt6-base-dev, qt6-base-dev-tools, libqt6serialport6-dev
 Standards-Version: 3.6.1.1
 
 Package: qmodbus

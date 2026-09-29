@@ -1,10 +1,17 @@
-QModBus can be easily built using Qt5 qmake:
+QModBus can be easily built using Qt6 qmake:
 
 mkdir build
 cd build
-qmake ..
+qmake6 ..
 make
 
 and that's it. Alternatively open the project with Qt Creator and build
 it with the according tool buttons.
+
+On distributions where the Qt6 qmake binary isn't on PATH as "qmake6"
+(e.g. it's just "qmake" pointing at Qt6), use that name instead.
+
+Requires the Qt6 base/widgets development packages and the Qt6
+SerialPort module (e.g. on openSUSE: qt6-base-devel and
+qt6-serialport-devel).
 

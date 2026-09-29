@@ -1,8 +1,8 @@
 win32 {
 	dlls.path = $$PREFIX
-	qt5platforms.path = $${dlls.path}/platforms
+	qt6platforms.path = $${dlls.path}/platforms
 
-	MAIN_DLLS=Qt5Core Qt5Gui Qt5Widgets libpng16-16
+	MAIN_DLLS=Qt6Core Qt6Gui Qt6Widgets Qt6SerialPort libpng16-16
 	for(dll, MAIN_DLLS): dlls.files += $$[QT_INSTALL_BINS]/$${dll}.dll
 
 	dlls.files += /usr/x86_64-w64-mingw32/lib/zlib1.dll
@@ -10,9 +10,9 @@ win32 {
 	dlls.files += /usr/lib/gcc/x86_64-w64-mingw32/6.3-win32/libgcc_s_seh-1.dll
 
 	# add required Qt plugin DLLs
-	qt5platforms.files += $$[QT_INSTALL_PLUGINS]/platforms/qwindows.dll
+	qt6platforms.files += $$[QT_INSTALL_PLUGINS]/platforms/qwindows.dll
 
-	INSTALLS += dlls qt5platforms
+	INSTALLS += dlls qt6platforms
 }
 
 unix {
